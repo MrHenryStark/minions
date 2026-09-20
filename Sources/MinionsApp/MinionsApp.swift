@@ -32,9 +32,19 @@ struct MenuBarLabel: View {
 
     /// The bundled mark, loaded as a template image so AppKit tints it to
     /// match the menu bar's light/dark appearance and selected state.
+    ///
+    /// Loaded via `AppResources`, not `Bundle.module` — SwiftPM's synthesized
+    /// accessor looks in the wrong place inside a macOS `.app` and falls back
+    /// to a path that only exists on the machine that built the binary, so it
+    /// crashes every CI-built release on launch. See `AppResources`'s doc
+    /// comment. The @2x file is loaded directly and its size halved to its
+    /// logical point size, which AppKit then renders sharply on Retina
+    /// displays (effectively every Mac this app targets).
     static let logo: NSImage? = {
-        let img = Bundle.module.image(forResource: "MenuBarIcon")
-        img?.isTemplate = true
+        guard let url = AppResources.url(inResourceBundle: "Minions_MinionsApp", file: "MenuBarIcon@2x.png"),
+              let img = NSImage(contentsOf: url) else { return nil }
+        img.size = NSSize(width: img.size.width / 2, height: img.size.height / 2)
+        img.isTemplate = true
         return img
     }()
 

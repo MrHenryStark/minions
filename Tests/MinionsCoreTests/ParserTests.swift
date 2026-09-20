@@ -147,6 +147,40 @@ final class ParserTests: XCTestCase {
         XCTAssertEqual(c[1].provider, "openai")
     }
 
+    // MARK: resource loading regression guard
+
+    /// SwiftPM's synthesized `Bundle.module` accessor looks for a resource
+    /// bundle next to `Bundle.main`'s own root and falls back to an absolute
+    /// path baked in at *compile time on the machine that built the binary* —
+    /// see AppResources.swift. That fallback only ever matches by coincidence
+    /// on the machine that built it, so a CI-built release crashes on launch
+    /// with a fatalError no calling code can catch (confirmed by installing
+    /// an actual release build to /Applications: 5/5 launches crashed before
+    /// this fix, 5/5 succeeded after). `AppResources` exists specifically to
+    /// avoid it; this test fails loudly if that accessor creeps back into
+    /// runtime code, in either target's Sources.
+    func testNoRuntimeCodeUsesBundleModule() throws {
+        let root = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent() // ParserTests.swift
+            .deletingLastPathComponent() // MinionsCoreTests
+            .deletingLastPathComponent() // Tests
+            .appendingPathComponent("Sources")
+        let fm = FileManager.default
+        var offenders: [String] = []
+        for target in ["MinionsCore", "MinionsApp"] {
+            let dir = root.appendingPathComponent(target)
+            guard let e = fm.enumerator(at: dir, includingPropertiesForKeys: nil) else { continue }
+            for case let url as URL in e where url.pathExtension == "swift" {
+                guard let text = try? String(contentsOf: url, encoding: .utf8) else { continue }
+                let codeLines = text.split(separator: "\n").filter { !$0.trimmingCharacters(in: .whitespaces).hasPrefix("//") }
+                if codeLines.contains(where: { $0.contains("Bundle.module") }) && url.lastPathComponent != "BundleResources.swift" {
+                    offenders.append(url.lastPathComponent)
+                }
+            }
+        }
+        XCTAssertTrue(offenders.isEmpty, "Bundle.module used outside AppResources.swift, in: \(offenders) — use AppResources.url(inResourceBundle:file:) instead")
+    }
+
     // MARK: pi
 
     func testPiReaderDedupesAcrossProvidersAndSkipsNonAssistant() throws {

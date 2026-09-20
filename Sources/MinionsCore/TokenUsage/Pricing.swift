@@ -92,8 +92,12 @@ public final class PricingCatalog: @unchecked Sendable {
     /// so a fresh install has reasonable prices even before the first network
     /// refresh. Not present outside the bundle (e.g. `swift test`) is fine;
     /// callers fall through to an opportunistic cache or an empty catalog.
+    ///
+    /// Resolved via `AppResources`, not the SwiftPM-synthesized `Bundle.module`
+    /// — see that type's doc comment for why `Bundle.module` cannot be used
+    /// safely here in a packaged, CI-built app.
     static func bundledSnapshotURL() throws -> URL {
-        guard let url = Bundle.module.url(forResource: "models_dev_snapshot", withExtension: "json") else {
+        guard let url = AppResources.url(inResourceBundle: "Minions_MinionsCore", file: "models_dev_snapshot.json") else {
             throw CocoaError(.fileNoSuchFile)
         }
         return url
