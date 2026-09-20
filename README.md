@@ -144,6 +144,17 @@ git push origin v0.1.0
 
 ## Changelog
 
+### v0.1.2
+
+Subscription and local lanes (Codex on its flat OpenAI plan, Hermes routing
+through ollama-cloud, on-device models) always bill $0 by design — that's
+correct, but showing a bare "$0" next to real, nonzero token counts made an
+agent with genuine usage look identical to one that did nothing at all.
+Cost cells now show the notional list-rate cost instead when billed is $0
+and notional isn't (`~$296` rather than `$0`), in both the popover's usage
+list and the dashboard's per-agent/per-model tables — matching what the
+dashboard's overview already showed in aggregate.
+
 ### v0.1.1
 
 Fixed a crash-on-launch that affected every CI-built release, including the

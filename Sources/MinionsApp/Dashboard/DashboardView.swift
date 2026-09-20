@@ -265,7 +265,12 @@ struct TokensPane: View {
                 TableColumn("Cache r/w") { Text("\(Fmt.tokens($0.cacheRead)) / \(Fmt.tokens($0.cacheWrite))").monospacedDigit() }.width(120)
                 TableColumn("Output") { Text(Fmt.tokens($0.output)).monospacedDigit() }.width(70)
                 TableColumn("Hit") { Text($0.cacheHitRate.map { String(format: "%.0f%%", $0 * 100) } ?? "").monospacedDigit() }.width(50)
-                TableColumn("Cost") { Text($0.hasUnknownCost ? "?" : Fmt.usd($0.costBilled)).monospacedDigit().fontWeight(.medium) }.width(70)
+                TableColumn("Cost") { s in
+                    let cell = Fmt.billedCell(billed: s.costBilled, notional: s.costNotional, unknown: s.hasUnknownCost)
+                    Text(cell).monospacedDigit().fontWeight(.medium)
+                        .foregroundStyle(cell.hasPrefix("~") ? .secondary : .primary)
+                        .help(cell.hasPrefix("~") ? "Runs on a flat subscription, so it's billed $0 — this is what it would cost at list API rates" : "")
+                }.width(70)
                 TableColumn("Last") { Text($0.lastActivity.map { Fmt.ago($0) } ?? "") }.width(50)
             }
             .frame(height: CGFloat(min(max(rows.count, 1), 8)) * 26 + 30)

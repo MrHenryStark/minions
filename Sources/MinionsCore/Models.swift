@@ -275,6 +275,18 @@ public enum Fmt {
         if v < 100 { return String(format: "$%.2f", v) }
         return String(format: "$%.0f", v)
     }
+
+    /// A cost cell for a summary row: a subscription or local lane (Codex,
+    /// ollama-cloud, on-device models) always bills $0 by design, and showing
+    /// a bare "$0" next to real, nonzero token counts reads as "no usage" —
+    /// indistinguishable from an agent that genuinely did nothing. When that's
+    /// the case, this shows the notional list-rate cost instead, tilde-prefixed
+    /// to mark it as "not actually billed, but what this would have cost."
+    public static func billedCell(billed: Double, notional: Double, unknown: Bool) -> String {
+        if unknown { return "?" }
+        if billed == 0 && notional > 0.001 { return "~\(usd(notional))" }
+        return usd(billed)
+    }
     public static func bytes(_ b: UInt64) -> String {
         ByteCountFormatter.string(fromByteCount: Int64(b), countStyle: .memory)
     }

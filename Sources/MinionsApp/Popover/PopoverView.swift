@@ -249,7 +249,11 @@ struct UsageRow: View {
             Spacer()
             Text("\(Fmt.tokens(summary.total))").font(.caption).foregroundStyle(.secondary).monospacedDigit()
             if let hr = summary.cacheHitRate { Text(String(format: "%.0f%% cache", hr * 100)).font(.caption2).foregroundStyle(.tertiary) }
-            Text(summary.hasUnknownCost ? "?" : Fmt.usd(summary.costBilled)).monospacedDigit().fontWeight(.medium).frame(width: 60, alignment: .trailing)
+            let cell = Fmt.billedCell(billed: summary.costBilled, notional: summary.costNotional, unknown: summary.hasUnknownCost)
+            Text(cell)
+                .monospacedDigit().fontWeight(.medium).frame(width: 60, alignment: .trailing)
+                .foregroundStyle(cell.hasPrefix("~") ? .secondary : .primary)
+                .help(cell.hasPrefix("~") ? "Runs on a flat subscription, so it's billed $0 — this is what it would cost at list API rates" : "")
         }
         .padding(.vertical, 2)
     }

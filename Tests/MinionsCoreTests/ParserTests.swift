@@ -147,6 +147,19 @@ final class ParserTests: XCTestCase {
         XCTAssertEqual(c[1].provider, "openai")
     }
 
+    // MARK: display formatting
+
+    func testBilledCellSurfacesNotionalForSubscriptionLanes() {
+        // Codex: billed $0 (flat subscription), but real usage worth something at list rates.
+        XCTAssertEqual(Fmt.billedCell(billed: 0, notional: 296, unknown: false), "~$296")
+        // A genuinely idle or truly-free lane still reads as plain $0, not "~$0".
+        XCTAssertEqual(Fmt.billedCell(billed: 0, notional: 0, unknown: false), "$0")
+        // A metered lane shows its real cost untouched, notional or not.
+        XCTAssertEqual(Fmt.billedCell(billed: 4.2, notional: 4.2, unknown: false), "$4.20")
+        // Unknown pricing always wins, regardless of what notional happens to be.
+        XCTAssertEqual(Fmt.billedCell(billed: 0, notional: 12, unknown: true), "?")
+    }
+
     // MARK: resource loading regression guard
 
     /// SwiftPM's synthesized `Bundle.module` accessor looks for a resource
