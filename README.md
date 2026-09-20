@@ -142,6 +142,33 @@ git tag v0.1.0
 git push origin v0.1.0
 ```
 
+## Changelog
+
+### v0.1.1
+
+Fixed a crash-on-launch that affected every CI-built release, including the
+original v0.1.0 download. SwiftPM's synthesized `Bundle.module` resource
+accessor looks for a bundled resource next to `Bundle.main`'s own root —
+correct for a bare CLI binary, wrong for a macOS `.app`, where resources live
+under `Contents/Resources/` — and its only fallback is an absolute path baked
+in at compile time on the machine that built the binary, which cannot exist
+on any other machine. Both the bundled pricing snapshot and the menu bar
+icon used it, so the app crashed the instant its first view rendered on any
+machine other than the one that built it.
+
+Caught by actually installing the released DMG to `/Applications` rather than
+trusting a green CI run: 5/5 launches crashed before the fix, 5/5 succeeded
+after, re-verified against the real CI-built, freshly downloaded artifact.
+Resource loading now goes through [`AppResources`](Sources/MinionsCore/BundleResources.swift),
+which resolves paths from the running app's own bundle instead, and a
+regression test fails the build if `Bundle.module` reappears anywhere outside it.
+
+### v0.1.0
+
+Initial release: ports, Docker, and AI agent token usage (Claude Code, Codex,
+Hermes, Pi) in a macOS menu bar app, with self-contained pricing and no
+required dependency on any single agent.
+
 ## Contributing an agent reader
 
 To support another coding agent or local model runner, add a reader under
